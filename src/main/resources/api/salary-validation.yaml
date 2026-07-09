@@ -1,0 +1,707 @@
+openapi: 3.0.3
+info:
+  title: Employee Salary Validation Platform
+  description: REST API for monitoring employee salary payment confirmations
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+paths:
+  /employees:
+    post:
+      tags: [Employees]
+      summary: Register a new employee
+      operationId: createEmployee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Employees]
+      summary: List employees
+      operationId: listEmployees
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: active
+          in: query
+          schema:
+            type: boolean
+        - name: department
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of employees
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedEmployeesResponse'
+
+  /employees/{employeeId}:
+    get:
+      tags: [Employees]
+      summary: Get employee by ID
+      operationId: getEmployee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Employee found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Employees]
+      summary: Update employee
+      operationId: updateEmployee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '200':
+          description: Employee updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Employees]
+      summary: Deactivate employee (soft delete)
+      operationId: deleteEmployee
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Employee deactivated
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /employees/matricule/{matricule}:
+    get:
+      tags: [Employees]
+      summary: Search employee by matricule with current salary payment
+      operationId: searchByMatricule
+      parameters:
+        - name: matricule
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employee found with current salary payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeWithSalaryResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /employees/{employeeId}/salary-payments:
+    get:
+      tags: [Employees]
+      summary: Get salary payment history for an employee
+      operationId: getEmployeeSalaryHistory
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Paginated salary payment history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedSalaryHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /salary-payments:
+    post:
+      tags: [Salary Payments]
+      summary: Create a salary payment
+      operationId: createSalaryPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSalaryPaymentRequest'
+      responses:
+        '201':
+          description: Salary payment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalaryPaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Salary Payments]
+      summary: List salary payments
+      operationId: listSalaryPayments
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/PaymentStatus'
+        - name: employeeId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Paginated list of salary payments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedSalaryPaymentsResponse'
+
+  /salary-payments/bulk:
+    post:
+      tags: [Salary Payments]
+      summary: Create multiple salary payments
+      operationId: bulkCreateSalaryPayments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCreateSalaryPaymentRequest'
+      responses:
+        '201':
+          description: Salary payments created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkCreateSalaryPaymentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /salary-payments/{paymentId}:
+    get:
+      tags: [Salary Payments]
+      summary: Get salary payment by ID
+      operationId: getSalaryPayment
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Salary payment found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalaryPaymentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /employees/matricule/{matricule}/salary-payments/current/confirmation:
+    patch:
+      tags: [Salary Payments]
+      summary: Confirm current salary payment
+      operationId: confirmSalary
+      parameters:
+        - name: matricule
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmSalaryRequest'
+      responses:
+        '200':
+          description: Salary confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /dashboard/statistics:
+    get:
+      tags: [Dashboard]
+      summary: Get salary confirmation statistics
+      operationId: getStatistics
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Statistics for the period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsResponse'
+
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number (1-based)
+      schema:
+        type: integer
+        default: 1
+    SizeParam:
+      name: size
+      in: query
+      description: Items per page (max 100)
+      schema:
+        type: integer
+        default: 20
+    SortParam:
+      name: sort
+      in: query
+      description: Sort field and direction (e.g. lastName,asc)
+      schema:
+        type: string
+
+  schemas:
+    PaymentStatus:
+      type: string
+      enum: [PENDING, FULLY_RECEIVED, PARTIALLY_RECEIVED, NOT_RECEIVED]
+
+    CreateEmployeeRequest:
+      type: object
+      required: [matricule, firstName, lastName, department, position]
+      properties:
+        matricule:
+          type: string
+          maxLength: 50
+        firstName:
+          type: string
+          maxLength: 100
+        lastName:
+          type: string
+          maxLength: 100
+        department:
+          type: string
+          maxLength: 100
+        position:
+          type: string
+          maxLength: 100
+
+    EmployeeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        matricule:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        department:
+          type: string
+        position:
+          type: string
+        active:
+          type: boolean
+
+    EmployeeWithSalaryResponse:
+      type: object
+      properties:
+        employee:
+          $ref: '#/components/schemas/EmployeeResponse'
+        salaryPayment:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/SalaryPaymentSimple'
+
+    SalaryPaymentSimple:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        month:
+          type: integer
+        year:
+          type: integer
+        expectedAmount:
+          type: number
+          format: double
+        receivedAmount:
+          type: number
+          format: double
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        confirmationDate:
+          type: string
+          format: date-time
+          nullable: true
+        canConfirm:
+          type: boolean
+
+    CreateSalaryPaymentRequest:
+      type: object
+      required: [employeeId, month, year, expectedAmount]
+      properties:
+        employeeId:
+          type: string
+          format: uuid
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        year:
+          type: integer
+          minimum: 2021
+        expectedAmount:
+          type: number
+          format: double
+          exclusiveMinimum: 0
+
+    BulkCreateSalaryPaymentRequest:
+      type: object
+      required: [month, year, payments]
+      properties:
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+        year:
+          type: integer
+          minimum: 2021
+        payments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [employeeId, expectedAmount]
+            properties:
+              employeeId:
+                type: string
+                format: uuid
+              expectedAmount:
+                type: number
+                format: double
+                exclusiveMinimum: 0
+
+    BulkCreateSalaryPaymentResponse:
+      type: object
+      properties:
+        createdCount:
+          type: integer
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalaryPaymentResponse'
+
+    SalaryPaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        employee:
+          $ref: '#/components/schemas/EmployeeRef'
+        month:
+          type: integer
+        year:
+          type: integer
+        expectedAmount:
+          type: number
+          format: double
+        receivedAmount:
+          type: number
+          format: double
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        confirmationDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    EmployeeRef:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        matricule:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        department:
+          type: string
+        position:
+          type: string
+
+    ConfirmSalaryRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        receivedAmount:
+          type: number
+          format: double
+          nullable: true
+
+    ConfirmationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        month:
+          type: integer
+        year:
+          type: integer
+        expectedAmount:
+          type: number
+          format: double
+        receivedAmount:
+          type: number
+          format: double
+          nullable: true
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        confirmationDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        isFirst:
+          type: boolean
+        isLast:
+          type: boolean
+
+    PagedEmployeesResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PagedSalaryPaymentsResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalaryPaymentResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PagedSalaryHistoryResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalaryPaymentSimple'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        errorCode:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+
+    StatisticsResponse:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            month:
+              type: integer
+            year:
+              type: integer
+        employees:
+          type: object
+          properties:
+            total:
+              type: integer
+            active:
+              type: integer
+            withPaymentRegistered:
+              type: integer
+            withoutPaymentRegistered:
+              type: integer
+        confirmations:
+          type: object
+          properties:
+            pending:
+              type: integer
+            fullyReceived:
+              type: integer
+            partiallyReceived:
+              type: integer
+            notReceived:
+              type: integer
+        amounts:
+          type: object
+          properties:
+            totalExpected:
+              type: number
+              format: double
+            totalReceived:
+              type: number
+              format: double
+            totalOutstanding:
+              type: number
+              format: double
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

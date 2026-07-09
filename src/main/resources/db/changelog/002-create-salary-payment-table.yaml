@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-salary-payment-table
+      author: system
+      changes:
+        - createTable:
+            tableName: salary_payments
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: employee_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pay_month
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pay_year
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expected_amount
+                  type: DECIMAL(12, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: received_amount
+                  type: DECIMAL(12, 2)
+              - column:
+                  name: status
+                  type: VARCHAR(30)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: confirmation_date
+                  type: TIMESTAMP
+        - addForeignKeyConstraint:
+            constraintName: fk_salary_payment_employee
+            baseTableName: salary_payments
+            baseColumnNames: employee_id
+            referencedTableName: employees
+            referencedColumnNames: id
+        - addUniqueConstraint:
+            tableName: salary_payments
+            columnNames: employee_id, pay_month, pay_year
+            constraintName: uk_salary_payment_employee_period
+        - sql:
+            sql: ALTER TABLE salary_payments ADD CONSTRAINT ck_salary_payment_month CHECK (pay_month >= 1 AND pay_month <= 12)
+        - sql:
+            sql: ALTER TABLE salary_payments ADD CONSTRAINT ck_salary_payment_year CHECK (pay_year > 2020)
+        - sql:
+            sql: ALTER TABLE salary_payments ADD CONSTRAINT ck_salary_payment_expected_amount CHECK (expected_amount > 0)
