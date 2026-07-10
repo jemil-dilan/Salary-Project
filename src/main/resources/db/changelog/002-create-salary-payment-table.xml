@@ -34,14 +34,8 @@
         <addUniqueConstraint tableName="salary_payments"
                              columnNames="employee_id, pay_month, pay_year"
                              constraintName="uk_salary_payment_employee_period"/>
-        <addCheckConstraint constraintName="ck_salary_payment_month"
-                            tableName="salary_payments"
-                            condition="pay_month BETWEEN 1 AND 12"/>
-        <addCheckConstraint constraintName="ck_salary_payment_year"
-                            tableName="salary_payments"
-                            condition="pay_year > 2020"/>
-        <addCheckConstraint constraintName="ck_salary_payment_expected_amount"
-                            tableName="salary_payments"
-                            condition="expected_amount > 0"/>
+        <sql><![CDATA[ALTER TABLE salary_payments ADD CONSTRAINT ck_salary_payment_month CHECK (pay_month >= 1 AND pay_month <= 12)]]></sql>
+        <sql><![CDATA[ALTER TABLE salary_payments ADD CONSTRAINT ck_salary_payment_year CHECK (pay_year > 2020)]]></sql>
+        <sql><![CDATA[ALTER TABLE salary_payments ADD CONSTRAINT ck_salary_payment_expected_amount CHECK (expected_amount > 0)]]></sql>
     </changeSet>
 </databaseChangeLog>

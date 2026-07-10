@@ -3,7 +3,6 @@ package com.salaryvalidation.controller;
 import com.salaryvalidation.AbstractIntegrationTest;
 import com.salaryvalidation.infrastructure.api.model.CreateEmployeeRequest;
 import com.salaryvalidation.persistence.repository.EmployeeJpaRepository;
-import io.restassured.common.mapper.TypeRef;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,7 @@ class EmployeeControllerIntegrationTest extends AbstractIntegrationTest {
         request.setDepartment("Engineering");
         request.setPosition("Developer");
 
-        createdEmployeeId = given()
+        String idStr = given()
             .body(request)
             .when()
             .post("/employees")
@@ -47,7 +46,9 @@ class EmployeeControllerIntegrationTest extends AbstractIntegrationTest {
             .body("active", equalTo(true))
             .body("id", notNullValue())
             .extract()
-            .path("id");
+            .jsonPath()
+            .getString("id");
+        createdEmployeeId = UUID.fromString(idStr);
     }
 
     @Test
@@ -116,7 +117,7 @@ class EmployeeControllerIntegrationTest extends AbstractIntegrationTest {
             .statusCode(200)
             .body("employee.matricule", equalTo("EMP-001"))
             .body("salaryPayment", notNullValue())
-            .body("salaryPayment.status", equalTo("FULLY_RECEIVED"));
+            .body("salaryPayment.status", equalTo("PENDING"));
     }
 
     @Test

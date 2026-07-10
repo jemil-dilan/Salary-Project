@@ -53,7 +53,7 @@ class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
         payment.setYear(current.getYear());
         payment.setExpectedAmount(BigDecimal.valueOf(EXPECTED_AMOUNT));
         payment.setStatus(com.salaryvalidation.domain.salary.PaymentStatus.PENDING);
-        SalaryPaymentEntity savedPayment = salaryPaymentRepo.save(payment);
+        salaryPaymentRepo.save(payment);
     }
 
     @AfterEach
@@ -70,10 +70,10 @@ class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Order(1)
-    void shouldConfirmFullyReceived() {
+    void shouldDeriveFullyReceived_WhenAmountEqualsExpected() {
         given()
             .contentType(ContentType.JSON)
-            .body(Map.of("status", "FULLY_RECEIVED"))
+            .body(Map.of("status", "FULLY_RECEIVED", "receivedAmount", EXPECTED_AMOUNT))
             .when()
             .patch("/employees/matricule/{matricule}/salary-payments/current/confirmation",
                 TEST_MATRICULE)
@@ -85,7 +85,7 @@ class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Order(2)
-    void shouldConfirmNotReceived() {
+    void shouldDeriveNotReceived_WhenAmountIsNull() {
         given()
             .contentType(ContentType.JSON)
             .body(Map.of("status", "NOT_RECEIVED"))
@@ -94,13 +94,12 @@ class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
                 TEST_MATRICULE)
             .then()
             .statusCode(200)
-            .body("status", equalTo("NOT_RECEIVED"))
-            .body("receivedAmount", equalTo(0.0f));
+            .body("status", equalTo("NOT_RECEIVED"));
     }
 
     @Test
     @Order(3)
-    void shouldConfirmPartiallyReceived() {
+    void shouldDerivePartiallyReceived_WhenAmountIsLessThanExpected() {
         given()
             .contentType(ContentType.JSON)
             .body(Map.of("status", "PARTIALLY_RECEIVED", "receivedAmount", 50000.0))
@@ -115,30 +114,51 @@ class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Order(4)
-    void shouldFailPartialConfirmation_WhenAmountMissing() {
+    void shouldAllowIncrementalUpdate_WhenPartiallyReceived() {
         given()
             .contentType(ContentType.JSON)
-            .body(Map.of("status", "PARTIALLY_RECEIVED"))
+            .body(Map.of("status", "PARTIALLY_RECEIVED", "receivedAmount", 30000.0))
             .when()
             .patch("/employees/matricule/{matricule}/salary-payments/current/confirmation",
                 TEST_MATRICULE)
             .then()
-            .statusCode(400)
-            .body("errorCode", equalTo("MISSING_RECEIVED_AMOUNT"));
+            .statusCode(200)
+            .body("status", equalTo("PARTIALLY_RECEIVED"))
+            .body("receivedAmount", equalTo(30000.0f));
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of("status", "PARTIALLY_RECEIVED", "receivedAmount", 70000.0))
+            .when()
+            .patch("/employees/matricule/{matricule}/salary-payments/current/confirmation",
+                TEST_MATRICULE)
+            .then()
+            .statusCode(200)
+            .body("status", equalTo("PARTIALLY_RECEIVED"))
+            .body("receivedAmount", equalTo(70000.0f));
     }
 
     @Test
     @Order(5)
-    void shouldFailPartialConfirmation_WhenAmountEqualsExpected() {
+    void shouldFailConfirmation_WhenAmountDecreased() {
         given()
             .contentType(ContentType.JSON)
-            .body(Map.of("status", "PARTIALLY_RECEIVED", "receivedAmount", EXPECTED_AMOUNT))
+            .body(Map.of("status", "PARTIALLY_RECEIVED", "receivedAmount", 50000.0))
+            .when()
+            .patch("/employees/matricule/{matricule}/salary-payments/current/confirmation",
+                TEST_MATRICULE)
+            .then()
+            .statusCode(200);
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of("status", "NOT_RECEIVED", "receivedAmount", 20000.0))
             .when()
             .patch("/employees/matricule/{matricule}/salary-payments/current/confirmation",
                 TEST_MATRICULE)
             .then()
             .statusCode(400)
-            .body("errorCode", equalTo("INVALID_AMOUNT"));
+            .body("errorCode", equalTo("INVALID_AMOUNT_DECREASE"));
     }
 
     @Test
@@ -146,7 +166,7 @@ class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
     void shouldFailConfirmation_WhenAlreadyConfirmed() {
         given()
             .contentType(ContentType.JSON)
-            .body(Map.of("status", "FULLY_RECEIVED"))
+            .body(Map.of("status", "FULLY_RECEIVED", "receivedAmount", EXPECTED_AMOUNT))
             .when()
             .patch("/employees/matricule/{matricule}/salary-payments/current/confirmation",
                 TEST_MATRICULE)

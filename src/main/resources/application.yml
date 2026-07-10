@@ -3,7 +3,7 @@ spring:
     name: salary-validation-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/salary_validation_db
+    url: jdbc:postgresql://localhost:5433/salary_validation_db
     username: salary_admin
     password: admin_password
     driver-class-name: org.postgresql.Driver
