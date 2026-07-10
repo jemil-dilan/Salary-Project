@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="002-create-salary-payment-table" author="system">
+        <createTable tableName="salary_payments">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="employee_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pay_month" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pay_year" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expected_amount" type="DECIMAL(12, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="received_amount" type="DECIMAL(12, 2)"/>
+            <column name="status" type="VARCHAR(30)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="confirmation_date" type="TIMESTAMP"/>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_salary_payment_employee"
+                                 baseTableName="salary_payments"
+                                 baseColumnNames="employee_id"
+                                 referencedTableName="employees"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="salary_payments"
+                             columnNames="employee_id, pay_month, pay_year"
+                             constraintName="uk_salary_payment_employee_period"/>
+        <addCheckConstraint constraintName="ck_salary_payment_month"
+                            tableName="salary_payments"
+                            condition="pay_month BETWEEN 1 AND 12"/>
+        <addCheckConstraint constraintName="ck_salary_payment_year"
+                            tableName="salary_payments"
+                            condition="pay_year > 2020"/>
+        <addCheckConstraint constraintName="ck_salary_payment_expected_amount"
+                            tableName="salary_payments"
+                            condition="expected_amount > 0"/>
+    </changeSet>
+</databaseChangeLog>
