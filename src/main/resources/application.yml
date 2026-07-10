@@ -3,9 +3,9 @@ spring:
     name: salary-validation-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/salary_validation
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://localhost:5432/salary_validation_db
+    username: salary_admin
+    password: admin_password
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -18,7 +18,7 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
 
 server:
@@ -29,3 +29,8 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+salary:
+  confirmation:
+    start-day: 25
+    end-day: 5

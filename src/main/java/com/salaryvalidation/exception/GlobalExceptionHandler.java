@@ -39,13 +39,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateMatriculeException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateMatricule(DuplicateMatriculeException ex,
-                                                                   HttpServletRequest request) {
+                                                                    HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT, "DUPLICATE_MATRICULE", ex.getMessage(), request);
     }
 
     @ExceptionHandler(DuplicateSalaryPaymentException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateSalaryPayment(DuplicateSalaryPaymentException ex,
-                                                                       HttpServletRequest request) {
+                                                                        HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT, "DUPLICATE_SALARY_PAYMENT", ex.getMessage(), request);
     }
 
@@ -55,15 +55,21 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, "ALREADY_CONFIRMED", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ConfirmationWindowClosedException.class)
+    public ResponseEntity<ErrorResponse> handleConfirmationWindowClosed(ConfirmationWindowClosedException ex,
+                                                                         HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "CONFIRMATION_WINDOW_CLOSED", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidConfirmationException.class)
     public ResponseEntity<ErrorResponse> handleInvalidConfirmation(InvalidConfirmationException ex,
-                                                                    HttpServletRequest request) {
+                                                                     HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getErrorCode(), ex.getMessage(), request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
-                                                                HttpServletRequest request) {
+                                                                 HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", ex.getMessage(), request);
     }
 
@@ -79,7 +85,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
-                                                                    HttpServletRequest request) {
+                                                                     HttpServletRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", ex.getMessage(), request);
     }
 

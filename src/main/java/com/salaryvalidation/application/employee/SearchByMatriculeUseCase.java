@@ -1,5 +1,6 @@
 package com.salaryvalidation.application.employee;
 
+import com.salaryvalidation.configuration.ConfirmationWindow;
 import com.salaryvalidation.domain.employee.Employee;
 import com.salaryvalidation.domain.salary.SalaryPayment;
 import com.salaryvalidation.exception.EmployeeInactiveException;
@@ -22,18 +23,21 @@ public class SearchByMatriculeUseCase {
     private final SalaryPaymentJpaRepository salaryPaymentRepo;
     private final EmployeePersistenceMapper employeeMapper;
     private final SalaryPaymentPersistenceMapper salaryPaymentMapper;
+    private final ConfirmationWindow confirmationWindow;
 
     public SearchByMatriculeUseCase(EmployeeJpaRepository employeeRepo,
                                      SalaryPaymentJpaRepository salaryPaymentRepo,
                                      EmployeePersistenceMapper employeeMapper,
-                                     SalaryPaymentPersistenceMapper salaryPaymentMapper) {
+                                     SalaryPaymentPersistenceMapper salaryPaymentMapper,
+                                     ConfirmationWindow confirmationWindow) {
         this.employeeRepo = employeeRepo;
         this.salaryPaymentRepo = salaryPaymentRepo;
         this.employeeMapper = employeeMapper;
         this.salaryPaymentMapper = salaryPaymentMapper;
+        this.confirmationWindow = confirmationWindow;
     }
 
-    public record EmployeeWithCurrentPaymentResponse(Employee employee, SalaryPayment salaryPayment) {
+    public record EmployeeWithCurrentPaymentResponse(Employee employee, SalaryPayment salaryPayment, boolean canConfirm) {
     }
 
     public EmployeeWithCurrentPaymentResponse execute(String matricule) {
@@ -55,6 +59,15 @@ public class SearchByMatriculeUseCase {
             .map(salaryPaymentMapper::toDomain)
             .orElse(null);
 
-        return new EmployeeWithCurrentPaymentResponse(employee, salaryPayment);
+        boolean canConfirm = false;
+        if (salaryPayment != null) {
+            canConfirm = switch (salaryPayment.getStatus()) {
+                case PENDING -> confirmationWindow.isOpen();
+                case PARTIALLY_RECEIVED, NOT_RECEIVED -> true;
+                case FULLY_RECEIVED -> false;
+            };
+        }
+
+        return new EmployeeWithCurrentPaymentResponse(employee, salaryPayment, canConfirm);
     }
 }

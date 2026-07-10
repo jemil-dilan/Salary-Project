@@ -32,7 +32,7 @@ public interface SalaryPaymentDtoMapper {
     @Mapping(target = "receivedAmount", source = "receivedAmount", qualifiedByName = "bigDecimalToDouble")
     ConfirmationResponse toConfirmationResponse(SalaryPayment payment);
 
-    @Mapping(target = "canConfirm", expression = "java(payment.getStatus() == com.salaryvalidation.domain.salary.PaymentStatus.PENDING)")
+    @Mapping(target = "canConfirm", ignore = true)
     @Mapping(target = "expectedAmount", source = "expectedAmount", qualifiedByName = "bigDecimalToDouble")
     @Mapping(target = "receivedAmount", source = "receivedAmount", qualifiedByName = "bigDecimalToDouble")
     SalaryPaymentSimple toSimpleResponse(SalaryPayment payment);
