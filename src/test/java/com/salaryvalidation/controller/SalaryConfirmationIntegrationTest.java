@@ -22,6 +22,10 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+@org.springframework.test.context.TestPropertySource(properties = {
+    "salary.confirmation.start-day=1",
+    "salary.confirmation.end-day=28"
+})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SalaryConfirmationIntegrationTest extends AbstractIntegrationTest {
 
