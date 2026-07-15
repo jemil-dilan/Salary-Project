@@ -10,6 +10,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: salary_validation_db
+          POSTGRES_USER: salary_admin
+          POSTGRES_PASSWORD: admin_password
+        options: '--health-cmd "pg_isready -U salary_admin -d salary_validation_db" --health-interval 10s --health-timeout 5s --health-retries 5'
+
     steps:
       - uses: actions/checkout@v6
 
@@ -28,6 +39,10 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/salary_validation_db
+          DATABASE_USER: salary_admin
+          DATABASE_PASSWORD: admin_password
 
       - name: Upload Test Report
         if: always()
