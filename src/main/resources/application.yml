@@ -3,11 +3,9 @@ spring:
     name: salary-validation-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/salary_validation_db
-    username: salary_admin
-    password: admin_password
-    driver-class-name: org.postgresql.Driver
-
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/salary_validation_db}
+    username: ${DATABASE_USER:salary_admin}
+    password: ${DATABASE_PASSWORD:admin_password}
   jpa:
     hibernate:
       ddl-auto: validate
